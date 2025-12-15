@@ -1,12 +1,12 @@
-# 🎯 Nullos Kill
+# Nullos Kill
 
 **Nullos Kill** est une application web interactive de suivi de scores et de calcul de dettes en temps réel, spécialement conçue pour animer les sessions de jeu en stream.
 
 Le concept est simple et impitoyable : on suit les performances des joueurs (Kills, Revives) en direct. À la fin de la partie, le joueur avec le score le plus bas (le "Nullos") est désigné perdant et doit payer une dette aux vainqueurs, calculée automatiquement selon un multiplicateur configurable.
 
-## ✨ Fonctionnalités Principales
+## Fonctionnalités Principales
 
-### 🎮 Panneau d'Administration (`/admin`)
+### Panneau d'Administration (`/admin`)
 Une interface complète pour le maître du jeu :
 - **Gestion des Joueurs** : Ajout, modification et suppression de joueurs à la volée.
 - **Live Scoring** : Mise à jour instantanée des Kills et Revives.
@@ -16,14 +16,14 @@ Une interface complète pour le maître du jeu :
 - **Système de Dettes** : Calcul automatique des sommes dues en fin de partie avec gestion des égalités.
 - **Analytique** : Graphiques détaillés de l'historique des parties et de l'évolution des dettes financières.
 
-### 📺 Overlay de Stream (`/stream`)
+### Overlay de Stream (`/stream`)
 Une vue optimisée pour l'intégration dans OBS/Streamlabs :
 - **Mise à jour Temps Réel** : Les scores changent instantanément grâce aux WebSockets.
 - **Design Réactif** : Cartes de joueurs animées avec indicateurs visuels.
 - **Mode "Focus Loser"** : Option pour isoler et mettre en avant le joueur actuellement en danger.
 - **Animation de Fin de Partie** : Un écran "Game Over" spectaculaire (style roue de la fortune) qui annonce le perdant et le montant de la dette avec une typographie personnalisée ("Sugar Bread").
 
-## 🛠️ Stack Technique
+## Stack Technique
 
 Ce projet est construit avec une architecture moderne et robuste :
 
@@ -33,7 +33,7 @@ Ce projet est construit avec une architecture moderne et robuste :
 - **Temps Réel** : Socket.io pour la communication bidirectionnelle instantanée.
 - **Déploiement** : Entièrement conteneurisé avec Docker et Docker Compose.
 
-## 🚀 Installation et Démarrage
+## Installation et Démarrage
 
 ### Prérequis
 - Docker et Docker Compose installés sur votre machine.
@@ -56,7 +56,7 @@ Ce projet est construit avec une architecture moderne et robuste :
    - **Overlay Stream** : [http://localhost:3000/stream](http://localhost:3000/stream)
    - **API Backend** : [http://localhost:3001](http://localhost:3001)
 
-## 🎨 Personnalisation
+## Personnalisation
 
 - **Polices** : Le projet utilise la police "Sugar Bread" pour l'overlay de fin de partie (à placer dans `frontend/public/fonts/`).
 - **Thème** : Couleurs principales basées sur une palette Vert/Marron/Rouge configurable via Tailwind.
