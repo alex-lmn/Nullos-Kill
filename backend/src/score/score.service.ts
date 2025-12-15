@@ -78,6 +78,38 @@ export class ScoreService {
     return savedSettings;
   }
 
+  async toggleVisibility(): Promise<GameSettings> {
+    let settings = await this.getSettings();
+    settings.isVisible = !settings.isVisible;
+    const savedSettings = await this.settingsRepository.save(settings);
+    this.scoreGateway.broadcastSettings(savedSettings);
+    return savedSettings;
+  }
+
+  async toggleScoresVisibility(): Promise<GameSettings> {
+    let settings = await this.getSettings();
+    settings.areScoresVisible = !settings.areScoresVisible;
+    const savedSettings = await this.settingsRepository.save(settings);
+    this.scoreGateway.broadcastSettings(savedSettings);
+    return savedSettings;
+  }
+
+  async toggleMultiplierVisibility(): Promise<GameSettings> {
+    let settings = await this.getSettings();
+    settings.isMultiplierVisible = !settings.isMultiplierVisible;
+    const savedSettings = await this.settingsRepository.save(settings);
+    this.scoreGateway.broadcastSettings(savedSettings);
+    return savedSettings;
+  }
+
+  async toggleLoserPreviewVisibility(): Promise<GameSettings> {
+    let settings = await this.getSettings();
+    settings.isLoserPreviewVisible = !settings.isLoserPreviewVisible;
+    const savedSettings = await this.settingsRepository.save(settings);
+    this.scoreGateway.broadcastSettings(savedSettings);
+    return savedSettings;
+  }
+
   async addPlayer(name: string): Promise<Player> {
     const player = this.playerRepository.create({ name });
     const savedPlayer = await this.playerRepository.save(player);

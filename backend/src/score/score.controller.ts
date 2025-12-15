@@ -41,6 +41,26 @@ export class ScoreController {
     return this.scoreService.updateLoserPreviewVisibility(isLoserPreviewVisible);
   }
 
+  @Post('settings/visibility/toggle')
+  toggleVisibility() {
+    return this.scoreService.toggleVisibility();
+  }
+
+  @Post('settings/scores-visibility/toggle')
+  toggleScoresVisibility() {
+    return this.scoreService.toggleScoresVisibility();
+  }
+
+  @Post('settings/multiplier-visibility/toggle')
+  toggleMultiplierVisibility() {
+    return this.scoreService.toggleMultiplierVisibility();
+  }
+
+  @Post('settings/loser-preview-visibility/toggle')
+  toggleLoserPreviewVisibility() {
+    return this.scoreService.toggleLoserPreviewVisibility();
+  }
+
   @Patch(':id/multiplier')
   updatePlayerMultiplier(@Param('id') id: number, @Body('multiplier') multiplier: number) {
     return this.scoreService.updatePlayerMultiplier(id, multiplier);
