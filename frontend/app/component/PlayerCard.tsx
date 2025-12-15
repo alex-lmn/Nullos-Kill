@@ -24,7 +24,7 @@ export function PlayerCard({
       <div className="w-full sm:w-1/3 mb-4 sm:mb-0">
         <div className="flex items-center gap-2 mb-2">
           <span className="bg-gray-700 text-xs px-2 py-1 rounded text-gray-400">
-            ID: {player.id}
+            {player.id}
           </span>
           <input
             type="text"

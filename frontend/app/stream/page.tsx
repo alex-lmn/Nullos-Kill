@@ -68,12 +68,12 @@ export default function StreamPage() {
         onComplete={() => setGameResult(null)} 
       />
       <div
-        className={`relative transition-all duration-700 ease-in-out transform min-h-screen w-full ${
+        className={`relative transition-all duration-700 ease-in-out transform min-h-screen w-full mt-6 ${
           isVisible ? "opacity-100 translate-y-0" : "opacity-0 -translate-y-10"
         }`}
       >
          <div className={`w-full flex justify-center transition-all duration-700 ease-in-out transform ${
-          isMultiplierVisible && !gameResult ? "opacity-100 translate-y-0 mt-6 max-h-20" : "opacity-0 -translate-y-10 pointer-events-none mt-0 max-h-0 overflow-hidden"
+          isMultiplierVisible && !gameResult ? "opacity-100 translate-y-0 max-h-20" : "opacity-0 -translate-y-10 pointer-events-none mt-0 max-h-0 overflow-hidden"
         }`}>
           <div className="bg-[#8b6d4d] text-white p-2 rounded-lg shadow-lg flex items-center gap-1 border-2 border-[#66a866]">
               <span className="text-lg font-bold font-mono">x {multiplier}</span>

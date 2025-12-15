@@ -257,7 +257,7 @@ export default function AdminPage() {
     : [];
 
   return (
-    <div className="p-8 max-w-6xl mx-auto">
+    <div className="p-8 max-w-7xl mx-auto">
       <LastGameResult
         message={lastGameMessage}
         onClose={() => setLastGameMessage(null)}
@@ -296,6 +296,7 @@ export default function AdminPage() {
       </div>
 
       <div className="bg-gray-800 p-4 rounded-lg mb-8 flex items-center gap-4 flex-wrap">
+        <h1 className="text-2xl text-white font-bold w-full">Paramètres de Stream</h1>
         <div className="flex items-center gap-4">
           <label className="text-white font-bold">
             Multiplicateur (en centimes par point) :
@@ -310,7 +311,7 @@ export default function AdminPage() {
 
         <div className="flex items-center gap-4 bg-gray-700 px-4 py-2 rounded-xl border border-gray-600">
           <label className="text-white font-bold">
-            Somme actuelle en jeu :
+            Somme en jeu :
           </label>
           <span className="text-2xl font-mono text-green-400 font-bold">
             {formatCurrency(currentSum)}
