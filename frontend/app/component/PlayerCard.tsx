@@ -9,6 +9,7 @@ interface PlayerCardProps {
   onUpdateMultiplier: (id: number, multiplier: number) => void;
   onDelete: (id: number) => void;
   formatCurrency: (cents: number) => string;
+  areRevivesVisible: boolean;
 }
 
 export function PlayerCard({
@@ -18,6 +19,7 @@ export function PlayerCard({
   onUpdateMultiplier,
   onDelete,
   formatCurrency,
+  areRevivesVisible,
 }: PlayerCardProps) {
   return (
     <div className="bg-gray-800 p-4 rounded-lg flex flex-col sm:flex-row items-center justify-between text-white w-full xl:w-[calc(50%-12px)]">
@@ -73,7 +75,7 @@ export function PlayerCard({
         </div>
 
         <div className="text-center">
-          <div className="text-sm text-gray-400 mb-1">Revives</div>
+          <div className="text-sm text-gray-400 mb-1">{areRevivesVisible ? "Revives" : "Deaths"}</div>
           <div className="flex items-center gap-2">
             <IconButton
               onClick={() =>

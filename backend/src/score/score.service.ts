@@ -31,7 +31,8 @@ export class ScoreService {
         isVisible: true, 
         areScoresVisible: true, 
         isMultiplierVisible: true,
-        isLoserPreviewVisible: false 
+        isLoserPreviewVisible: false,
+        areRevivesVisible: true
       });
       await this.settingsRepository.save(settings);
     }
@@ -78,6 +79,14 @@ export class ScoreService {
     return savedSettings;
   }
 
+  async updateRevivesVisibility(areRevivesVisible: boolean): Promise<GameSettings> {
+    let settings = await this.getSettings();
+    settings.areRevivesVisible = areRevivesVisible;
+    const savedSettings = await this.settingsRepository.save(settings);
+    this.scoreGateway.broadcastSettings(savedSettings);
+    return savedSettings;
+  }
+
   async toggleVisibility(): Promise<GameSettings> {
     let settings = await this.getSettings();
     settings.isVisible = !settings.isVisible;
@@ -105,6 +114,14 @@ export class ScoreService {
   async toggleLoserPreviewVisibility(): Promise<GameSettings> {
     let settings = await this.getSettings();
     settings.isLoserPreviewVisible = !settings.isLoserPreviewVisible;
+    const savedSettings = await this.settingsRepository.save(settings);
+    this.scoreGateway.broadcastSettings(savedSettings);
+    return savedSettings;
+  }
+
+  async toggleRevivesVisibility(): Promise<GameSettings> {
+    let settings = await this.getSettings();
+    settings.areRevivesVisible = !settings.areRevivesVisible;
     const savedSettings = await this.settingsRepository.save(settings);
     this.scoreGateway.broadcastSettings(savedSettings);
     return savedSettings;
@@ -155,27 +172,43 @@ export class ScoreService {
     console.log('--- Finishing Game ---');
     console.log('Multiplier:', settings.multiplier);
 
-    // Calculate total score of all players
+    // Calculate total score of all players (for Debt/Money)
     let totalGameScore = 0;
     players.forEach(p => {
-      const playerScore = (p.kills + p.revives) * (p.scoreMultiplier || 1);
-      console.log(`Player ${p.name}: Kills=${p.kills}, Revives=${p.revives}, Multiplier=${p.scoreMultiplier}, Score=${playerScore}`);
-      totalGameScore += playerScore;
+      // If areRevivesVisible is false (Valorant Mode), only kills count for money.
+      // If true, both kills and revives count.
+      const moneyScore = settings.areRevivesVisible 
+        ? (p.kills + p.revives) * (p.scoreMultiplier || 1)
+        : p.kills * (p.scoreMultiplier || 1);
+      
+      totalGameScore += moneyScore;
     });
-    console.log('Total Game Score:', totalGameScore);
+    console.log('Total Game Score (Money Base):', totalGameScore);
 
-    // Find min and max scores
+    // Find min and max scores (for Ranking/Loser determination)
     let minScore = Infinity;
-    let maxScore = -1;
+    let maxScore = -Infinity;
     players.forEach(p => {
-      const score = (p.kills + p.revives) * (p.scoreMultiplier || 1);
+      // Ranking Score Logic:
+      // Standard: Kills + Revives
+      // Valorant: Kills - Deaths (Revives field). 
+      // To change the death penalty weight, modify the -1 below (e.g. to -0.5).
+      const reviveMultiplier = settings.areRevivesVisible ? 1 : -0.5; 
+      const score = (p.kills + (p.revives * reviveMultiplier)) * (p.scoreMultiplier || 1);
+      
       if (score < minScore) minScore = score;
       if (score > maxScore) maxScore = score;
     });
     console.log('Minimum Score:', minScore, 'Maximum Score:', maxScore);
 
-    const potentialLosers = players.filter(p => ((p.kills + p.revives) * (p.scoreMultiplier || 1)) === minScore);
-    const potentialWinners = players.filter(p => ((p.kills + p.revives) * (p.scoreMultiplier || 1)) === maxScore);
+    const potentialLosers = players.filter(p => {
+      const reviveMultiplier = settings.areRevivesVisible ? 1 : -1;
+      return ((p.kills + (p.revives * reviveMultiplier)) * (p.scoreMultiplier || 1)) === minScore;
+    });
+    const potentialWinners = players.filter(p => {
+      const reviveMultiplier = settings.areRevivesVisible ? 1 : -1;
+      return ((p.kills + (p.revives * reviveMultiplier)) * (p.scoreMultiplier || 1)) === maxScore;
+    });
     const gameDebt = totalGameScore * settings.multiplier;
 
     // 1. Determine Loser

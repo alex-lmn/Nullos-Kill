@@ -5,11 +5,12 @@ import { Player } from "../types";
 interface StreamPlayerCardProps {
   player: Player;
   isLosing?: boolean;
+  areRevivesVisible?: boolean;
 }
 
-export function StreamPlayerCard({ player, isLosing }: StreamPlayerCardProps) {
+export function StreamPlayerCard({ player, isLosing, areRevivesVisible = true }: StreamPlayerCardProps) {
   return (
-    <div className={`bg-[#66a866] text-white p-2 rounded-lg flex items-center gap-3 shadow-lg animate-slide-in min-w-[300px] ${isLosing ? 'ring-4 ring-red-600 scale-105 transition-transform' : ''}`}>
+    <div className={`bg-[#66a866] text-white p-2 rounded-lg flex items-center gap-3 shadow-lg animate-slide-in flex-wrap justify-center items-center min-w-[300px] ${isLosing ? "ring-4 ring-red-600 scale-105 transition-transform" : ""}`}>
       {isLosing && (
         <div className="absolute -top-4 left-1/2 transform -translate-x-1/2 bg-red-600 text-white px-3 py-1 rounded-full font-bold text-sm shadow-md animate-bounce z-10">
           LOSER
@@ -28,10 +29,10 @@ export function StreamPlayerCard({ player, isLosing }: StreamPlayerCardProps) {
         <div className="text-xl font-bold truncate">{player.name}</div>
       </div>
 
-      {/* Revives Box */}
-      <div className="bg-[#8b6d4d] rounded-md p-1 px-3 flex items-center gap-2 min-w-[80px] justify-center">
+      {/* Revives/Deaths Box */}
+      <div className={`bg-[#8b6d4d] rounded-md p-1 px-3 flex items-center gap-2 min-w-[80px] justify-center ${!areRevivesVisible ? "bg-red-900/80" : ""}`}>
         <span className="material-symbols-outlined text-3xl">
-          medical_services
+          {areRevivesVisible ? "medical_services" : "skull"}
         </span>
         <div className="text-2xl font-bold font-mono">
           <AnimatedNumber value={player.revives} />

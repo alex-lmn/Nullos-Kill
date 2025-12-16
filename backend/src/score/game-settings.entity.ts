@@ -19,4 +19,7 @@ export class GameSettings {
 
   @Column({ default: false })
   isLoserPreviewVisible: boolean;
+
+  @Column({ default: true })
+  areRevivesVisible: boolean;
 }

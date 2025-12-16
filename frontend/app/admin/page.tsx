@@ -26,6 +26,7 @@ export default function AdminPage() {
   const [areScoresVisible, setAreScoresVisible] = useState(true);
   const [isMultiplierVisible, setIsMultiplierVisible] = useState(true);
   const [isLoserPreviewVisible, setIsLoserPreviewVisible] = useState(false);
+  const [areRevivesVisible, setAreRevivesVisible] = useState(true);
 
   const fetchHistory = () => {
     fetch("http://localhost:3001/players/history")
@@ -48,6 +49,7 @@ export default function AdminPage() {
         setAreScoresVisible(data.areScoresVisible);
         setIsMultiplierVisible(data.isMultiplierVisible);
         setIsLoserPreviewVisible(data.isLoserPreviewVisible);
+        setAreRevivesVisible(data.areRevivesVisible);
       })
       .catch((err) => console.error("Failed to fetch settings:", err));
 
@@ -64,6 +66,7 @@ export default function AdminPage() {
       setAreScoresVisible(settings.areScoresVisible);
       setIsMultiplierVisible(settings.isMultiplierVisible);
       setIsLoserPreviewVisible(settings.isLoserPreviewVisible);
+      setAreRevivesVisible(settings.areRevivesVisible);
     });
 
     return () => {
@@ -105,6 +108,15 @@ export default function AdminPage() {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ isLoserPreviewVisible: visible }),
+    });
+  };
+
+  const updateRevivesVisibility = async (visible: boolean) => {
+    setAreRevivesVisible(visible);
+    await fetch("http://localhost:3001/players/settings/revives-visibility", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ areRevivesVisible: visible }),
     });
   };
 
@@ -155,7 +167,7 @@ export default function AdminPage() {
       !forceLoserId &&
       !forceWinnerId &&
       !confirm(
-        "Are you sure you want to finish the game? This will calculate debts and reset scores."
+      "Êtes-vous sûr de vouloir terminer la partie ? Cela calculera les dettes et réinitialisera les scores."
       )
     ) {
       return;
@@ -218,7 +230,7 @@ export default function AdminPage() {
   const resetAll = async () => {
     if (
       confirm(
-        "WARNING: This will reset ALL scores and debts to zero. Continue?"
+        "ATTENTION : ceci réinitialisera TOUS les scores et toutes les dettes à zéro. Continuer ?"
       )
     ) {
       await fetch("http://localhost:3001/players/reset", { method: "POST" });
@@ -233,7 +245,14 @@ export default function AdminPage() {
     });
   };
 
-  const currentSum = players.reduce((acc, p) => acc + (p.kills + p.revives) * (p.scoreMultiplier || 1), 0) * multiplier;
+  const currentSum = players.reduce((acc, p) => {
+    // In Valorant Mode (!areRevivesVisible), only kills count for money.
+    // In Standard Mode, both kills and revives count.
+    const points = areRevivesVisible 
+      ? (p.kills + p.revives) 
+      : p.kills;
+    return acc + points * (p.scoreMultiplier || 1);
+  }, 0) * multiplier;
 
   const COLORS = [
     "#8884d8",
@@ -365,6 +384,18 @@ export default function AdminPage() {
         >
           {isLoserPreviewVisible ? "Hide Loser" : "Show Loser"}
         </IconButton>
+
+        <IconButton
+          onClick={() => updateRevivesVisibility(!areRevivesVisible)}
+          icon={areRevivesVisible ? "medical_services" : "skull"}
+          className={`px-4 py-2 rounded-xl font-bold ${
+            areRevivesVisible 
+              ? "bg-teal-600 hover:bg-teal-700 text-white" 
+              : "bg-red-900 hover:bg-red-800 text-white"
+          }`}
+        >
+          {areRevivesVisible ? "Mode Standard" : "Mode Valorant"}
+        </IconButton>
       </div>
 
       <div className="mb-8 flex gap-4">
@@ -393,6 +424,7 @@ export default function AdminPage() {
             onUpdateMultiplier={updatePlayerMultiplier}
             onDelete={deletePlayer}
             formatCurrency={formatCurrency}
+            areRevivesVisible={areRevivesVisible}
           />
         ))}
       </div>

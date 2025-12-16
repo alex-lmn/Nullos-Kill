@@ -41,6 +41,11 @@ export class ScoreController {
     return this.scoreService.updateLoserPreviewVisibility(isLoserPreviewVisible);
   }
 
+  @Post('settings/revives-visibility')
+  updateRevivesVisibility(@Body('areRevivesVisible') areRevivesVisible: boolean) {
+    return this.scoreService.updateRevivesVisibility(areRevivesVisible);
+  }
+
   @Post('settings/visibility/toggle')
   toggleVisibility() {
     return this.scoreService.toggleVisibility();
@@ -59,6 +64,11 @@ export class ScoreController {
   @Post('settings/loser-preview-visibility/toggle')
   toggleLoserPreviewVisibility() {
     return this.scoreService.toggleLoserPreviewVisibility();
+  }
+
+  @Post('settings/revives-visibility/toggle')
+  toggleRevivesVisibility() {
+    return this.scoreService.toggleRevivesVisibility();
   }
 
   @Patch(':id/multiplier')

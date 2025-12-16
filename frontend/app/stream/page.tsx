@@ -16,6 +16,7 @@ export default function StreamPage() {
   const [isMultiplierVisible, setIsMultiplierVisible] = useState(true);
   const [isLoserPreviewVisible, setIsLoserPreviewVisible] = useState(false);
   const [gameResult, setGameResult] = useState<any>(null);
+  const [areRevivesVisible, setAreRevivesVisible] = useState(true);
 
   useEffect(() => {
     fetch("http://localhost:3001/players")
@@ -31,6 +32,7 @@ export default function StreamPage() {
         setAreScoresVisible(data.areScoresVisible);
         setIsMultiplierVisible(data.isMultiplierVisible);
         setIsLoserPreviewVisible(data.isLoserPreviewVisible);
+        setAreRevivesVisible(data.areRevivesVisible);
       })
       .catch((err) => console.error("Failed to fetch settings:", err));
 
@@ -44,6 +46,7 @@ export default function StreamPage() {
       setAreScoresVisible(settings.areScoresVisible);
       setIsMultiplierVisible(settings.isMultiplierVisible);
       setIsLoserPreviewVisible(settings.isLoserPreviewVisible);
+      setAreRevivesVisible(settings.areRevivesVisible);
     });
 
     socket.on("gameFinished", (result: any) => {
@@ -59,7 +62,12 @@ export default function StreamPage() {
     };
   }, []);
 
-  const minScore = players.length > 0 ? Math.min(...players.map(p => (p.kills + p.revives) * (p.scoreMultiplier || 1))) : 0;
+  const calculateScore = (p: Player) => {
+    const reviveMultiplier = areRevivesVisible ? 1 : -0.5;
+    return (p.kills + (p.revives * reviveMultiplier)) * (p.scoreMultiplier || 1);
+  };
+
+  const minScore = players.length > 0 ? Math.min(...players.map(calculateScore)) : 0;
   
   return (
     <>
@@ -84,13 +92,14 @@ export default function StreamPage() {
           areScoresVisible && !gameResult ? "opacity-100 translate-y-0" : "opacity-0 -translate-y-10 pointer-events-none"
         }`}>
           {players.map((player) => {
-            const score = (player.kills + player.revives) * (player.scoreMultiplier || 1);
+            const score = calculateScore(player);
             const isLoser = score === minScore;
             return (
               <StreamPlayerCard 
                 key={player.id} 
                 player={player} 
                 isLosing={isLoserPreviewVisible && isLoser}
+                areRevivesVisible={areRevivesVisible}
               />
             );
           })}
