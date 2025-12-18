@@ -22,4 +22,7 @@ export class GameSettings {
 
   @Column({ default: true })
   areRevivesVisible: boolean;
+
+  @Column({ default: true })
+  areAvatarsVisible: boolean;
 }

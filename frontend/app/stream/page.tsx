@@ -17,6 +17,7 @@ export default function StreamPage() {
   const [isLoserPreviewVisible, setIsLoserPreviewVisible] = useState(false);
   const [gameResult, setGameResult] = useState<any>(null);
   const [areRevivesVisible, setAreRevivesVisible] = useState(true);
+  const [areAvatarsVisible, setAreAvatarsVisible] = useState(true);
 
   useEffect(() => {
     fetch("http://localhost:3001/players")
@@ -33,6 +34,7 @@ export default function StreamPage() {
         setIsMultiplierVisible(data.isMultiplierVisible);
         setIsLoserPreviewVisible(data.isLoserPreviewVisible);
         setAreRevivesVisible(data.areRevivesVisible);
+        setAreAvatarsVisible(data.areAvatarsVisible);
       })
       .catch((err) => console.error("Failed to fetch settings:", err));
 
@@ -47,6 +49,7 @@ export default function StreamPage() {
       setIsMultiplierVisible(settings.isMultiplierVisible);
       setIsLoserPreviewVisible(settings.isLoserPreviewVisible);
       setAreRevivesVisible(settings.areRevivesVisible);
+      setAreAvatarsVisible(settings.areAvatarsVisible);
     });
 
     socket.on("gameFinished", (result: any) => {
@@ -76,19 +79,19 @@ export default function StreamPage() {
         onComplete={() => setGameResult(null)} 
       />
       <div
-        className={`relative transition-all duration-700 ease-in-out transform min-h-screen w-full mt-6 ${
+        className={`relative transition-all duration-700 ease-in-out transform min-h-screen w-full pt-4 flex flex-col gap-4 ${
           isVisible ? "opacity-100 translate-y-0" : "opacity-0 -translate-y-10"
         }`}
       >
          <div className={`w-full flex justify-center transition-all duration-700 ease-in-out transform ${
-          isMultiplierVisible && !gameResult ? "opacity-100 translate-y-0 max-h-20" : "opacity-0 -translate-y-10 pointer-events-none mt-0 max-h-0 overflow-hidden"
+          isMultiplierVisible && !gameResult ? "opacity-100 translate-y-0 max-h-20" : "opacity-0 -translate-y-10 pointer-events-none max-h-0 overflow-hidden"
         }`}>
           <div className="bg-[#8b6d4d] text-white p-2 rounded-lg shadow-lg flex items-center gap-1 border-2 border-[#66a866]">
               <span className="text-lg font-bold font-mono">x {multiplier}</span>
           </div>
         </div>
 
-        <div className={`bg-transparent p-4 flex flex-wrap gap-4 justify-center items-start transition-all duration-700 ease-in-out transform ${
+        <div className={`bg-transparent flex flex-wrap gap-4 justify-center items-start transition-all duration-700 ease-in-out transform ${
           areScoresVisible && !gameResult ? "opacity-100 translate-y-0" : "opacity-0 -translate-y-10 pointer-events-none"
         }`}>
           {players.map((player) => {
@@ -100,6 +103,7 @@ export default function StreamPage() {
                 player={player} 
                 isLosing={isLoserPreviewVisible && isLoser}
                 areRevivesVisible={areRevivesVisible}
+                areAvatarsVisible={areAvatarsVisible}
               />
             );
           })}

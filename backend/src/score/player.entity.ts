@@ -22,4 +22,7 @@ export class Player {
 
   @Column('float', { default: 1.0 })
   scoreMultiplier: number;
+
+  @Column({ nullable: true })
+  avatarUrl: string;
 }

@@ -1,4 +1,7 @@
-import { Controller, Get, Post, Body, Param, Delete, Patch } from '@nestjs/common';
+import { Controller, Get, Post, Body, Param, Delete, Patch, UseInterceptors, UploadedFile } from '@nestjs/common';
+import { FileInterceptor } from '@nestjs/platform-express';
+import { diskStorage } from 'multer';
+import { extname } from 'path';
 import { ScoreService } from './score.service';
 import { Player } from './player.entity';
 
@@ -46,6 +49,11 @@ export class ScoreController {
     return this.scoreService.updateRevivesVisibility(areRevivesVisible);
   }
 
+  @Post('settings/avatars-visibility')
+  updateAvatarsVisibility(@Body('areAvatarsVisible') areAvatarsVisible: boolean) {
+    return this.scoreService.updateAvatarsVisibility(areAvatarsVisible);
+  }
+
   @Post('settings/visibility/toggle')
   toggleVisibility() {
     return this.scoreService.toggleVisibility();
@@ -69,6 +77,11 @@ export class ScoreController {
   @Post('settings/revives-visibility/toggle')
   toggleRevivesVisibility() {
     return this.scoreService.toggleRevivesVisibility();
+  }
+
+  @Post('settings/avatars-visibility/toggle')
+  toggleAvatarsVisibility() {
+    return this.scoreService.toggleAvatarsVisibility();
   }
 
   @Patch(':id/multiplier')
@@ -97,6 +110,26 @@ export class ScoreController {
   @Patch(':id')
   updatePlayer(@Param('id') id: string, @Body() data: Partial<Player>) {
     return this.scoreService.updatePlayer(+id, data);
+  }
+
+  @Post(':id/avatar')
+  @UseInterceptors(FileInterceptor('file', {
+    storage: diskStorage({
+      destination: './uploads',
+      filename: (req, file, cb) => {
+        const randomName = Array(32).fill(null).map(() => (Math.round(Math.random() * 16)).toString(16)).join('');
+        return cb(null, `${randomName}${extname(file.originalname)}`);
+      }
+    })
+  }))
+  async uploadAvatar(@Param('id') id: string, @UploadedFile() file: Express.Multer.File) {
+    const avatarUrl = `http://localhost:3001/uploads/${file.filename}`;
+    return this.scoreService.updateAvatar(+id, avatarUrl);
+  }
+
+  @Delete(':id/avatar')
+  async deleteAvatar(@Param('id') id: string) {
+    return this.scoreService.removeAvatar(+id);
   }
 
   @Delete(':id')

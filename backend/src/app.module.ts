@@ -1,5 +1,7 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { ServeStaticModule } from '@nestjs/serve-static';
+import { join } from 'path';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { ScoreModule } from './score/score.module';
@@ -14,6 +16,10 @@ import { GameHistory } from './score/game-history.entity';
       url: process.env.DATABASE_URL || 'postgres://admin:password@localhost:5432/scores_db',
       entities: [Player, GameSettings, GameHistory],
       synchronize: true, // Don't use this in production
+    }),
+    ServeStaticModule.forRoot({
+      rootPath: join(__dirname, '..', 'uploads'),
+      serveRoot: '/uploads',
     }),
     ScoreModule,
   ],

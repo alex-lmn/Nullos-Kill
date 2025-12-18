@@ -6,6 +6,7 @@ export interface Player {
   totalDebt: number;
   debts?: Record<string, number>;
   scoreMultiplier: number;
+  avatarUrl?: string;
 }
 
 export interface GameHistory {

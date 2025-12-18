@@ -25,14 +25,15 @@ export class ScoreService {
   async getSettings(): Promise<GameSettings> {
     let settings = await this.settingsRepository.findOne({ where: { id: 1 } });
     if (!settings) {
-      settings = this.settingsRepository.create({ 
-        id: 1, 
-        multiplier: 10, 
-        isVisible: true, 
-        areScoresVisible: true, 
+      settings = this.settingsRepository.create({
+        id: 1,
+        multiplier: 10,
+        isVisible: true,
+        areScoresVisible: true,
         isMultiplierVisible: true,
         isLoserPreviewVisible: false,
-        areRevivesVisible: true
+        areRevivesVisible: true,
+        areAvatarsVisible: true,
       });
       await this.settingsRepository.save(settings);
     }
@@ -55,7 +56,9 @@ export class ScoreService {
     return savedSettings;
   }
 
-  async updateScoresVisibility(areScoresVisible: boolean): Promise<GameSettings> {
+  async updateScoresVisibility(
+    areScoresVisible: boolean,
+  ): Promise<GameSettings> {
     let settings = await this.getSettings();
     settings.areScoresVisible = areScoresVisible;
     const savedSettings = await this.settingsRepository.save(settings);
@@ -63,7 +66,9 @@ export class ScoreService {
     return savedSettings;
   }
 
-  async updateMultiplierVisibility(isMultiplierVisible: boolean): Promise<GameSettings> {
+  async updateMultiplierVisibility(
+    isMultiplierVisible: boolean,
+  ): Promise<GameSettings> {
     let settings = await this.getSettings();
     settings.isMultiplierVisible = isMultiplierVisible;
     const savedSettings = await this.settingsRepository.save(settings);
@@ -71,7 +76,9 @@ export class ScoreService {
     return savedSettings;
   }
 
-  async updateLoserPreviewVisibility(isLoserPreviewVisible: boolean): Promise<GameSettings> {
+  async updateLoserPreviewVisibility(
+    isLoserPreviewVisible: boolean,
+  ): Promise<GameSettings> {
     let settings = await this.getSettings();
     settings.isLoserPreviewVisible = isLoserPreviewVisible;
     const savedSettings = await this.settingsRepository.save(settings);
@@ -79,9 +86,21 @@ export class ScoreService {
     return savedSettings;
   }
 
-  async updateRevivesVisibility(areRevivesVisible: boolean): Promise<GameSettings> {
+  async updateRevivesVisibility(
+    areRevivesVisible: boolean,
+  ): Promise<GameSettings> {
     let settings = await this.getSettings();
     settings.areRevivesVisible = areRevivesVisible;
+    const savedSettings = await this.settingsRepository.save(settings);
+    this.scoreGateway.broadcastSettings(savedSettings);
+    return savedSettings;
+  }
+
+  async updateAvatarsVisibility(
+    areAvatarsVisible: boolean,
+  ): Promise<GameSettings> {
+    let settings = await this.getSettings();
+    settings.areAvatarsVisible = areAvatarsVisible;
     const savedSettings = await this.settingsRepository.save(settings);
     this.scoreGateway.broadcastSettings(savedSettings);
     return savedSettings;
@@ -127,6 +146,14 @@ export class ScoreService {
     return savedSettings;
   }
 
+  async toggleAvatarsVisibility(): Promise<GameSettings> {
+    let settings = await this.getSettings();
+    settings.areAvatarsVisible = !settings.areAvatarsVisible;
+    const savedSettings = await this.settingsRepository.save(settings);
+    this.scoreGateway.broadcastSettings(savedSettings);
+    return savedSettings;
+  }
+
   async addPlayer(name: string): Promise<Player> {
     const player = this.playerRepository.create({ name });
     const savedPlayer = await this.playerRepository.save(player);
@@ -136,7 +163,9 @@ export class ScoreService {
 
   async updatePlayer(id: number, data: Partial<Player>): Promise<Player> {
     await this.playerRepository.update(id, data);
-    const updatedPlayer = await this.playerRepository.findOne({ where: { id } });
+    const updatedPlayer = await this.playerRepository.findOne({
+      where: { id },
+    });
     if (!updatedPlayer) {
       throw new Error('Player not found');
     }
@@ -144,7 +173,10 @@ export class ScoreService {
     return updatedPlayer;
   }
 
-  async updatePlayerMultiplier(id: number, multiplier: number): Promise<Player> {
+  async updatePlayerMultiplier(
+    id: number,
+    multiplier: number,
+  ): Promise<Player> {
     const player = await this.playerRepository.findOne({ where: { id } });
     if (!player) throw new Error('Player not found');
     player.scoreMultiplier = multiplier;
@@ -158,29 +190,32 @@ export class ScoreService {
     this.broadcastUpdate();
   }
 
-  async finishGame(forceLoserId?: number, forceWinnerId?: number): Promise<{ 
-    status: 'resolved' | 'tie_loser' | 'tie_winner', 
-    players?: Player[], 
-    result?: { losers: string[], winners: string[], debt: number }, 
-    candidates?: Player[], 
-    debtAmount?: number,
-    pendingLoserId?: number 
+  async finishGame(
+    forceLoserId?: number,
+    forceWinnerId?: number,
+  ): Promise<{
+    status: 'resolved' | 'tie_loser' | 'tie_winner';
+    players?: Player[];
+    result?: { losers: string[]; winners: string[]; debt: number };
+    candidates?: Player[];
+    debtAmount?: number;
+    pendingLoserId?: number;
   }> {
     const players = await this.getPlayers();
     const settings = await this.getSettings();
-    
+
     console.log('--- Finishing Game ---');
     console.log('Multiplier:', settings.multiplier);
 
     // Calculate total score of all players (for Debt/Money)
     let totalGameScore = 0;
-    players.forEach(p => {
+    players.forEach((p) => {
       // If areRevivesVisible is false (Valorant Mode), only kills count for money.
       // If true, both kills and revives count.
-      const moneyScore = settings.areRevivesVisible 
+      const moneyScore = settings.areRevivesVisible
         ? (p.kills + p.revives) * (p.scoreMultiplier || 1)
         : p.kills * (p.scoreMultiplier || 1);
-      
+
       totalGameScore += moneyScore;
     });
     console.log('Total Game Score (Money Base):', totalGameScore);
@@ -188,41 +223,51 @@ export class ScoreService {
     // Find min and max scores (for Ranking/Loser determination)
     let minScore = Infinity;
     let maxScore = -Infinity;
-    players.forEach(p => {
+    players.forEach((p) => {
       // Ranking Score Logic:
       // Standard: Kills + Revives
-      // Valorant: Kills - Deaths (Revives field). 
+      // Valorant: Kills - Deaths (Revives field).
       // To change the death penalty weight, modify the -1 below (e.g. to -0.5).
-      const reviveMultiplier = settings.areRevivesVisible ? 1 : -0.5; 
-      const score = (p.kills + (p.revives * reviveMultiplier)) * (p.scoreMultiplier || 1);
-      
+      const reviveMultiplier = settings.areRevivesVisible ? 1 : -0.5;
+      const score =
+        (p.kills + p.revives * reviveMultiplier) * (p.scoreMultiplier || 1);
+
       if (score < minScore) minScore = score;
       if (score > maxScore) maxScore = score;
     });
     console.log('Minimum Score:', minScore, 'Maximum Score:', maxScore);
 
-    const potentialLosers = players.filter(p => {
-      const reviveMultiplier = settings.areRevivesVisible ? 1 : -1;
-      return ((p.kills + (p.revives * reviveMultiplier)) * (p.scoreMultiplier || 1)) === minScore;
+    const potentialLosers = players.filter((p) => {
+      const reviveMultiplier = settings.areRevivesVisible ? 1 : -0.5;
+      return (
+        (p.kills + p.revives * reviveMultiplier) * (p.scoreMultiplier || 1) ===
+        minScore
+      );
     });
-    const potentialWinners = players.filter(p => {
-      const reviveMultiplier = settings.areRevivesVisible ? 1 : -1;
-      return ((p.kills + (p.revives * reviveMultiplier)) * (p.scoreMultiplier || 1)) === maxScore;
+    const potentialWinners = players.filter((p) => {
+      const reviveMultiplier = settings.areRevivesVisible ? 1 : -0.5;
+      return (
+        (p.kills + p.revives * reviveMultiplier) * (p.scoreMultiplier || 1) ===
+        maxScore
+      );
     });
     const gameDebt = totalGameScore * settings.multiplier;
 
     // 1. Determine Loser
     let loser: Player;
     if (forceLoserId) {
-      const found = players.find(p => p.id === forceLoserId);
+      const found = players.find((p) => p.id === forceLoserId);
       if (!found) throw new Error('Forced loser not found');
       loser = found;
     } else if (potentialLosers.length > 1) {
-      console.log('Tie detected for loser between:', potentialLosers.map(p => p.name));
+      console.log(
+        'Tie detected for loser between:',
+        potentialLosers.map((p) => p.name),
+      );
       return {
         status: 'tie_loser',
         candidates: potentialLosers,
-        debtAmount: gameDebt
+        debtAmount: gameDebt,
       };
     } else {
       loser = potentialLosers[0];
@@ -231,30 +276,35 @@ export class ScoreService {
     // 2. Determine Winner
     let winner: Player;
     if (forceWinnerId) {
-      const found = players.find(p => p.id === forceWinnerId);
+      const found = players.find((p) => p.id === forceWinnerId);
       if (!found) throw new Error('Forced winner not found');
       winner = found;
     } else if (potentialWinners.length > 1) {
       // If we have a tie for winner, we need to ask admin.
-      console.log('Tie detected for winner between:', potentialWinners.map(p => p.name));
+      console.log(
+        'Tie detected for winner between:',
+        potentialWinners.map((p) => p.name),
+      );
       return {
         status: 'tie_winner',
         candidates: potentialWinners,
         debtAmount: gameDebt,
-        pendingLoserId: loser.id
+        pendingLoserId: loser.id,
       };
     } else {
       winner = potentialWinners[0];
     }
 
     // 3. Apply Debt (with netting)
-    console.log(`Resolved - Loser: ${loser.name}, Winner: ${winner.name}, Debt: ${gameDebt}`);
-    
+    console.log(
+      `Resolved - Loser: ${loser.name}, Winner: ${winner.name}, Debt: ${gameDebt}`,
+    );
+
     if (!winner.debts) winner.debts = {};
     if (!loser.debts) loser.debts = {};
 
     const winnerOwesLoser = winner.debts[loser.id] || 0;
-    
+
     if (winnerOwesLoser > 0) {
       if (winnerOwesLoser >= gameDebt) {
         // Winner owes more or equal. Reduce winner's debt.
@@ -297,18 +347,18 @@ export class ScoreService {
     // Save history snapshot
     const allPlayers = await this.getPlayers();
     const snapshot: Record<string, number> = {};
-    allPlayers.forEach(p => {
+    allPlayers.forEach((p) => {
       snapshot[p.name] = p.totalDebt;
     });
     const history = this.historyRepository.create({ debtsSnapshot: snapshot });
     await this.historyRepository.save(history);
-    
+
     this.broadcastUpdate();
-    
+
     const result = {
       status: 'resolved' as const,
       players: await this.getPlayers(),
-      result: { losers: [loser.name], winners: [winner.name], debt: gameDebt }
+      result: { losers: [loser.name], winners: [winner.name], debt: gameDebt },
     };
 
     this.scoreGateway.broadcastGameFinished(result);
@@ -351,6 +401,43 @@ export class ScoreService {
     const player = await this.playerRepository.findOne({ where: { id } });
     if (!player) throw new Error('Player not found');
     player.revives += 1;
+    const saved = await this.playerRepository.save(player);
+    this.broadcastUpdate();
+    return saved;
+  }
+
+  async updateAvatar(id: number, avatarUrl: string): Promise<Player> {
+    const player = await this.playerRepository.findOne({ where: { id } });
+    if (!player) throw new Error('Player not found');
+    player.avatarUrl = avatarUrl;
+    const saved = await this.playerRepository.save(player);
+    this.broadcastUpdate();
+    return saved;
+  }
+
+  async removeAvatar(id: number): Promise<Player> {
+    const player = await this.playerRepository.findOne({ where: { id } });
+    if (!player) throw new Error('Player not found');
+    if (player.avatarUrl) {
+      try {
+        // Do not attempt to delete remote URLs
+        console.log(
+          'Attempting to delete avatar file at URL:',
+          player.avatarUrl,
+        );
+        const url = new URL(player.avatarUrl);
+        if (url.hostname === 'localhost' && url.port === '3001') {
+          const filePath = `./uploads/${url.pathname.split('/').pop()}`;
+          const fs = require('fs').promises;
+          await fs.unlink(filePath);
+          console.log('Deleted avatar file:', filePath);
+        }
+      } catch {
+        // ignore filesystem errors (file may not exist or permission issues)
+      }
+    }
+
+    player.avatarUrl = '';
     const saved = await this.playerRepository.save(player);
     this.broadcastUpdate();
     return saved;

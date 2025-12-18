@@ -27,6 +27,7 @@ export default function AdminPage() {
   const [isMultiplierVisible, setIsMultiplierVisible] = useState(true);
   const [isLoserPreviewVisible, setIsLoserPreviewVisible] = useState(false);
   const [areRevivesVisible, setAreRevivesVisible] = useState(true);
+  const [areAvatarsVisible, setAreAvatarsVisible] = useState(true);
 
   const fetchHistory = () => {
     fetch("http://localhost:3001/players/history")
@@ -50,6 +51,7 @@ export default function AdminPage() {
         setIsMultiplierVisible(data.isMultiplierVisible);
         setIsLoserPreviewVisible(data.isLoserPreviewVisible);
         setAreRevivesVisible(data.areRevivesVisible);
+        setAreAvatarsVisible(data.areAvatarsVisible);
       })
       .catch((err) => console.error("Failed to fetch settings:", err));
 
@@ -67,6 +69,7 @@ export default function AdminPage() {
       setIsMultiplierVisible(settings.isMultiplierVisible);
       setIsLoserPreviewVisible(settings.isLoserPreviewVisible);
       setAreRevivesVisible(settings.areRevivesVisible);
+      setAreAvatarsVisible(settings.areAvatarsVisible);
     });
 
     return () => {
@@ -120,11 +123,36 @@ export default function AdminPage() {
     });
   };
 
+  const updateAvatarsVisibility = async (visible: boolean) => {
+    setAreAvatarsVisible(visible);
+    await fetch("http://localhost:3001/players/settings/avatars-visibility", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ areAvatarsVisible: visible }),
+    });
+  };
+
   const updatePlayerMultiplier = async (id: number, multiplier: number) => {
-    await fetch(`http://localhost:3001/players/${id}/multiplier`, {
+    setPlayers(players.map((p) => (p.id === id ? { ...p, scoreMultiplier: multiplier } : p)));
+    await fetch(`http://localhost:3001/players/${id}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ multiplier }),
+      body: JSON.stringify({ scoreMultiplier: multiplier }),
+    });
+  };
+
+  const uploadAvatar = async (id: number, file: File) => {
+    const formData = new FormData();
+    formData.append("file", file);
+    await fetch(`http://localhost:3001/players/${id}/avatar`, {
+      method: "POST",
+      body: formData,
+    });
+  };
+
+  const deleteAvatar = async (id: number) => {
+    await fetch(`http://localhost:3001/players/${id}/avatar`, {
+      method: "DELETE",
     });
   };
 
@@ -396,6 +424,18 @@ export default function AdminPage() {
         >
           {areRevivesVisible ? "Mode Standard" : "Mode Valorant"}
         </IconButton>
+
+        <IconButton
+          onClick={() => updateAvatarsVisibility(!areAvatarsVisible)}
+          icon={areAvatarsVisible ? "image" : "hide_image"}
+          className={`px-4 py-2 rounded-xl font-bold ${
+            areAvatarsVisible 
+              ? "bg-purple-600 hover:bg-purple-700 text-white" 
+              : "bg-gray-600 hover:bg-gray-700 text-gray-300"
+          }`}
+        >
+          {areAvatarsVisible ? "Avatars Visible" : "Avatars Hidden"}
+        </IconButton>
       </div>
 
       <div className="mb-8 flex gap-4">
@@ -423,6 +463,8 @@ export default function AdminPage() {
             onUpdate={updatePlayer}
             onUpdateMultiplier={updatePlayerMultiplier}
             onDelete={deletePlayer}
+            onUploadAvatar={uploadAvatar}
+            onDeleteAvatar={deleteAvatar}
             formatCurrency={formatCurrency}
             areRevivesVisible={areRevivesVisible}
           />
