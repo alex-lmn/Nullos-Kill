@@ -478,7 +478,6 @@ export default function AdminPage() {
         Game terminer
       </IconButton>
       
-      <GameHistoryChart data={chartData} players={players} colors={COLORS} />
       <DebtEvolutionChart data={chartData} players={players} colors={COLORS} />
     </div>
   );

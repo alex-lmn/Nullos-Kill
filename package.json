@@ -1,0 +1,9 @@
+{
+  "devDependencies": {
+    "@types/tmi.js": "^1.8.6",
+    "baseline-browser-mapping": "^2.9.19"
+  },
+  "dependencies": {
+    "tmi.js": "^1.8.5"
+  }
+}

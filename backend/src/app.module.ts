@@ -5,6 +5,7 @@ import { join } from 'path';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { ScoreModule } from './score/score.module';
+import { SoundModule } from './sound/sound.module';
 import { Player } from './score/player.entity';
 import { GameSettings } from './score/game-settings.entity';
 import { GameHistory } from './score/game-history.entity';
@@ -22,6 +23,7 @@ import { GameHistory } from './score/game-history.entity';
       serveRoot: '/uploads',
     }),
     ScoreModule,
+    SoundModule,
   ],
   controllers: [AppController],
   providers: [AppService],
